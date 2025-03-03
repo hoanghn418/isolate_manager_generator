@@ -120,7 +120,7 @@ Future<void> addWorkerMappingToSourceFile(
   }
 
   // Write the modified content back to the file.
-  await file.writeAsString(content.join('\n'));
+  await file.writeAsString('${content.join('\n')}\n');
 
   printDebug(
     () =>
