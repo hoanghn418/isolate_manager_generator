@@ -146,6 +146,12 @@ Future<void> _generateFromAnotatedFunctions(
   String workerMappingsPath,
 ) async {
   final file = File('.IsolateManagerShared.${anotatedFunctions.hashCode}.dart');
+  final extension = isWasm ? 'wasm' : 'js';
+  final outputPath = p.join(output, '$name.$extension');
+  final outputFile = File(outputPath);
+  final backupOutputData =
+      await outputFile.exists() ? await outputFile.readAsString() : '';
+
   try {
     final sink = file.openWrite();
     sink.writeln("import 'package:isolate_manager/isolate_manager.dart';");
@@ -161,11 +167,6 @@ Future<void> _generateFromAnotatedFunctions(
     sink.writeln('  IsolateManagerFunction.sharedWorkerFunction(map);');
     sink.writeln('}');
     await sink.close();
-
-    final extension = isWasm ? 'wasm' : 'js';
-
-    final outputPath = p.join(output, '$name.$extension');
-    final outputFile = File(outputPath);
 
     if (await outputFile.exists()) {
       await outputFile.delete();
@@ -209,6 +210,7 @@ Future<void> _generateFromAnotatedFunctions(
       for (var element in r) {
         print('   > $element');
       }
+      throw Exception('Compile ERROR');
     }
 
     if (workerMappingsPath.isNotEmpty) {
@@ -221,6 +223,11 @@ Future<void> _generateFromAnotatedFunctions(
         );
       }
       printDebug(() => 'Done.');
+    }
+  } catch (e) {
+    // Restore the backup data if the compilation fails
+    if (backupOutputData.isNotEmpty && !await outputFile.exists()) {
+      await outputFile.writeAsString(backupOutputData);
     }
   } finally {
     if (!isDebug) {

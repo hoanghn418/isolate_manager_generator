@@ -195,6 +195,14 @@ Future<void> _generateFromAnotatedFunction(
   );
   inputPath = p.absolute(inputPath);
   final file = File(inputPath);
+  final extension = isWasm ? 'wasm' : 'js';
+  final name = function.value.workerName != ''
+      ? function.value.workerName
+      : function.key;
+  final outputPath = p.join(output, '$name.$extension');
+  final outputFile = File(outputPath);
+  final backupOutputData =
+      await outputFile.exists() ? await outputFile.readAsString() : '';
 
   try {
     final sink = file.openWrite();
@@ -211,14 +219,6 @@ Future<void> _generateFromAnotatedFunction(
     }
     sink.writeln('}');
     await sink.close();
-
-    final extension = isWasm ? 'wasm' : 'js';
-
-    final name = function.value.workerName != ''
-        ? function.value.workerName
-        : function.key;
-    final outputPath = p.join(output, '$name.$extension');
-    final outputFile = File(outputPath);
 
     if (await outputFile.exists()) {
       await outputFile.delete();
@@ -268,6 +268,7 @@ Future<void> _generateFromAnotatedFunction(
       for (var element in r) {
         print('   > $element');
       }
+      throw Exception('Compile ERROR');
     }
 
     if (workerMappingsPath.isNotEmpty) {
@@ -279,6 +280,11 @@ Future<void> _generateFromAnotatedFunction(
       );
 
       printDebug(() => 'Done.');
+    }
+  } catch (e) {
+    // Restore the backup data if the compilation fails
+    if (backupOutputData.isNotEmpty && !await outputFile.exists()) {
+      await outputFile.writeAsString(backupOutputData);
     }
   } finally {
     if (!isDebug && await file.exists()) {
