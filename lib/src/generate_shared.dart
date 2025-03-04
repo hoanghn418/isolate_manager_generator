@@ -146,8 +146,8 @@ Future<void> _generateFromAnotatedFunctions(
   String workerMappingsPath,
 ) async {
   final file = File('.IsolateManagerShared.${anotatedFunctions.hashCode}.dart');
-  final sink = file.openWrite();
   try {
+    final sink = file.openWrite();
     sink.writeln("import 'package:isolate_manager/isolate_manager.dart';");
     for (final function in anotatedFunctions.entries) {
       sink.writeln("import '${p.relative(function.value)}';");
