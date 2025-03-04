@@ -147,83 +147,85 @@ Future<void> _generateFromAnotatedFunctions(
 ) async {
   final file = File('.IsolateManagerShared.${anotatedFunctions.hashCode}.dart');
   final sink = file.openWrite();
-  sink.writeln("import 'package:isolate_manager/isolate_manager.dart';");
-  for (final function in anotatedFunctions.entries) {
-    sink.writeln("import '${p.relative(function.value)}';");
-  }
-  sink.writeln('final Map<String, Function> map = {');
-  for (final function in anotatedFunctions.entries) {
-    sink.writeln("'${function.key}' : ${function.key},");
-  }
-  sink.writeln('};');
-  sink.writeln('main() {');
-  sink.writeln('  IsolateManagerFunction.sharedWorkerFunction(map);');
-  sink.writeln('}');
-  await sink.close();
+  try {
+    sink.writeln("import 'package:isolate_manager/isolate_manager.dart';");
+    for (final function in anotatedFunctions.entries) {
+      sink.writeln("import '${p.relative(function.value)}';");
+    }
+    sink.writeln('final Map<String, Function> map = {');
+    for (final function in anotatedFunctions.entries) {
+      sink.writeln("'${function.key}' : ${function.key},");
+    }
+    sink.writeln('};');
+    sink.writeln('main() {');
+    sink.writeln('  IsolateManagerFunction.sharedWorkerFunction(map);');
+    sink.writeln('}');
+    await sink.close();
 
-  final extension = isWasm ? 'wasm' : 'js';
+    final extension = isWasm ? 'wasm' : 'js';
 
-  final outputPath = p.join(output, '$name.$extension');
-  final outputFile = File(outputPath);
+    final outputPath = p.join(output, '$name.$extension');
+    final outputFile = File(outputPath);
 
-  if (await outputFile.exists()) {
-    await outputFile.delete();
-  }
+    if (await outputFile.exists()) {
+      await outputFile.delete();
+    }
 
-  final process = Process.run(
-    'dart',
-    [
-      'compile',
-      extension,
-      file.path,
-      '-o',
-      outputPath,
-      obfuscate,
-      if (!isWasm) '--omit-implicit-checks',
-      if (!isDebug && !isWasm) '--no-source-maps',
-      ...dartArgs,
-    ],
-  );
+    final process = Process.run(
+      'dart',
+      [
+        'compile',
+        extension,
+        file.path,
+        '-o',
+        outputPath,
+        obfuscate,
+        if (!isWasm) '--omit-implicit-checks',
+        if (!isDebug && !isWasm) '--no-source-maps',
+        ...dartArgs,
+      ],
+    );
 
-  if (isDebug) {
-    process.asStream().listen((data) {
-      print(data.stdout);
-    });
-  }
+    if (isDebug) {
+      process.asStream().listen((data) {
+        print(data.stdout);
+      });
+    }
 
-  final result = await process;
+    final result = await process;
 
-  if (await outputFile.exists()) {
-    print('Compiled: ${p.relative(outputPath)}');
-    if (!isDebug) {
-      if (isWasm) {
-        await File('$output/$name.unopt.wasm').delete();
-      } else {
-        await File('$output/$name.js.deps').delete();
+    if (await outputFile.exists()) {
+      print('Compiled: ${p.relative(outputPath)}');
+      if (!isDebug) {
+        if (isWasm) {
+          await File('$output/$name.unopt.wasm').delete();
+        } else {
+          await File('$output/$name.js.deps').delete();
+        }
+      }
+    } else {
+      print('Compile ERROR: ${p.relative(outputPath)}');
+      final r = result.stdout.toString().split('\n');
+      for (var element in r) {
+        print('   > $element');
       }
     }
-  } else {
-    print('Compile ERROR: ${p.relative(outputPath)}');
-    final r = result.stdout.toString().split('\n');
-    for (var element in r) {
-      print('   > $element');
-    }
-  }
 
-  if (workerMappingsPath.isNotEmpty) {
-    printDebug(() => 'Generate the `workerMappings`...');
-    for (final function in anotatedFunctions.entries) {
-      await addWorkerMappingToSourceFile(
-        workerMappingsPath,
-        p.absolute(function.value),
-        function.key,
-      );
+    if (workerMappingsPath.isNotEmpty) {
+      printDebug(() => 'Generate the `workerMappings`...');
+      for (final function in anotatedFunctions.entries) {
+        await addWorkerMappingToSourceFile(
+          workerMappingsPath,
+          p.absolute(function.value),
+          function.key,
+        );
+      }
+      printDebug(() => 'Done.');
     }
-    printDebug(() => 'Done.');
-  }
-
-  if (!isDebug) {
-    await file.delete();
+  } finally {
+    if (!isDebug) {
+      await file.delete();
+    }
   }
 }
 
