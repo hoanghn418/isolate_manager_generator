@@ -1,3 +1,8 @@
+## 0.0.3
+
+* Remove the temp files event when issue occurs.
+* Refactor output file handling to include backup restoration on compilation failure.
+
 ## 0.0.2
 
 * Ensure newline at the end of file when writing modified content.
