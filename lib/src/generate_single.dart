@@ -19,6 +19,10 @@ final _singlePattern = RegExp(
   '(@$classAnnotation|@$classCustomWorkerAnnotation|@$constAnnotation|@$constCustomWorkerAnnotation)',
 );
 
+final sharedIsolates = IsolateManager.createShared(
+  concurrent: Platform.numberOfProcessors,
+);
+
 /// --path "path/to/generate" --obfuscate 0->4 --debug
 Future<void> generate(
   ArgResults argResults,
@@ -40,10 +44,6 @@ Future<void> generate(
   final isWorkerMappings = argResults['worker-mappings-experiment'] as String;
 
   print('Parsing the `IsolateManagerWorker` inside directory: $input...');
-
-  final sharedIsolates = IsolateManager.createShared(
-    concurrent: Platform.numberOfProcessors,
-  );
 
   final params = <List<dynamic>>[];
 
@@ -73,8 +73,7 @@ Future<void> generate(
   int counter = 0;
   await Future.wait([
     for (final param in params)
-      sharedIsolates
-          .compute(_getAndGenerateFromAnotatedFunctions, param)
+      _getAndGenerateFromAnotatedFunctions(param)
           .then((value) => counter += value),
   ]);
 
@@ -99,26 +98,11 @@ bool containsAnnotations(String content) {
 
 Future<int> _getAndGenerateFromAnotatedFunctions(List<dynamic> params) async {
   final filePath = params[0] as String;
-  final obfuscate = params[1] as String;
-  final isDebug = params[2] as bool;
-  final isWasm = params[3] as bool;
-  final output = params[4] as String;
-  final dartArgs = params[5] as List<String>;
-  final isWorkerMappings = params[6] as String;
 
   final anotatedFunctions = await _getAnotatedFunctions(filePath);
 
   if (anotatedFunctions.isNotEmpty) {
-    await _generateFromAnotatedFunctions(
-      filePath,
-      anotatedFunctions,
-      obfuscate,
-      isDebug,
-      isWasm,
-      output,
-      dartArgs,
-      isWorkerMappings,
-    );
+    await _generateFromAnotatedFunctions(params, anotatedFunctions);
   }
 
   return anotatedFunctions.length;
@@ -167,42 +151,45 @@ Future<Map<String, AnnotationResult>> _getAnotatedFunctions(String path) async {
 }
 
 Future<void> _generateFromAnotatedFunctions(
-  String sourceFilePath,
+  List<dynamic> params,
   Map<String, AnnotationResult> anotatedFunctions,
-  String obfuscate,
-  bool isDebug,
-  bool isWasm,
-  String output,
-  List<String> dartArgs,
-  String isWorkerMappings,
 ) async {
+  final sourceFilePath = params[0] as String;
+  final isWorkerMappings = params[6] as String;
+
   await Future.wait(
     [
       for (final function in anotatedFunctions.entries)
-        _generateFromAnotatedFunction(
-          sourceFilePath,
+        sharedIsolates.compute(_generateFromAnotatedFunction, [
+          params,
           function,
-          obfuscate,
-          isDebug,
-          isWasm,
-          output,
-          dartArgs,
-          isWorkerMappings,
-        ),
+        ]),
     ],
   );
+
+  for (final function in anotatedFunctions.entries) {
+    if (isWorkerMappings.isNotEmpty) {
+      printDebug(() => 'Generate the `workerMappings`...');
+      await addWorkerMappingToSourceFile(
+        isWorkerMappings,
+        sourceFilePath,
+        function.key,
+      );
+
+      printDebug(() => 'Done.');
+    }
+  }
 }
 
-Future<void> _generateFromAnotatedFunction(
-  String sourceFilePath,
-  MapEntry<String, AnnotationResult> function,
-  String obfuscate,
-  bool isDebug,
-  bool isWasm,
-  String output,
-  List<String> dartArgs,
-  String workerMappingsPath,
-) async {
+Future<void> _generateFromAnotatedFunction(List<dynamic> params) async {
+  final sourceFilePath = params[0][0] as String;
+  final obfuscate = params[0][1] as String;
+  final isDebug = params[0][2] as bool;
+  final isWasm = params[0][3] as bool;
+  final output = params[0][4] as String;
+  final dartArgs = params[0][5] as List<String>;
+  final MapEntry<String, AnnotationResult> function = params[1];
+
   String inputPath = p.join(
     p.dirname(sourceFilePath),
     '.IsolateManagerWorker.${function.key}.${function.hashCode}.dart',
@@ -283,17 +270,6 @@ Future<void> _generateFromAnotatedFunction(
         print('   > $element');
       }
       throw Exception('Compile ERROR');
-    }
-
-    if (workerMappingsPath.isNotEmpty) {
-      printDebug(() => 'Generate the `workerMappings`...');
-      await addWorkerMappingToSourceFile(
-        workerMappingsPath,
-        sourceFilePath,
-        function.key,
-      );
-
-      printDebug(() => 'Done.');
     }
   } catch (e) {
     // Restore the backup data if the compilation fails
