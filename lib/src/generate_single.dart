@@ -45,7 +45,6 @@ Future<void> generate(
     _getAndGenerateFromAnotatedFunctions,
     concurrent: 3,
   );
-  await isolateManager.start();
 
   final params = <List<dynamic>>[];
   for (final file in dartFiles) {
