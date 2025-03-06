@@ -12,10 +12,11 @@ import 'package:path/path.dart' as p;
 import 'model/annotation_result.dart';
 
 const classAnnotation = 'IsolateManagerWorker';
+const classCustomWorkerAnnotation = 'IsolateManagerCustomWorker';
 const constAnnotation = 'isolateManagerWorker';
 const constCustomWorkerAnnotation = 'isolateManagerCustomWorker';
 final _singlePattern = RegExp(
-  '(@$classAnnotation|@$constAnnotation|@$constCustomWorkerAnnotation)',
+  '(@$classAnnotation|@$classCustomWorkerAnnotation|@$constAnnotation|@$constCustomWorkerAnnotation)',
 );
 
 /// --path "path/to/generate" --obfuscate 0->4 --debug
@@ -298,14 +299,18 @@ AnnotationResult? _getIsolateManagerWorkerAnnotationValue(Element element) {
     final annotationElement = metadata.element;
     if (annotationElement is ConstructorElement) {
       final enclosingElement = annotationElement.enclosingElement;
-      if (enclosingElement is ClassElement &&
-          enclosingElement.name == classAnnotation) {
-        final annotation = metadata.computeConstantValue();
-        final value = annotation?.getField('name')?.toStringValue();
-        return AnnotationResult(
-          workerName: value ?? '',
-          isCustomWorker: false,
-        );
+      if (enclosingElement is ClassElement) {
+        if (enclosingElement.name == classAnnotation) {
+          return AnnotationResult(
+            workerName: '',
+            isCustomWorker: false,
+          );
+        } else if (enclosingElement.name == classCustomWorkerAnnotation) {
+          return AnnotationResult(
+            workerName: '',
+            isCustomWorker: true,
+          );
+        }
       }
     } else if (annotationElement is PropertyAccessorElement) {
       // TODO: Change to `variable2` when bumping the `analyzer` to `^6.0.0`
