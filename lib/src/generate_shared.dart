@@ -35,19 +35,22 @@ Future<void> generate(
 
   print('Parsing the `IsolateManagerWorker` inside directory: $input...');
 
-  final isolateManager = IsolateManager.create(
-    _getAndGenerateFromAnotatedFunctions,
-    concurrent: 3,
+  final sharedIsolates = IsolateManager.createShared(
+    concurrent: Platform.numberOfProcessors,
   );
 
   final params = <List<dynamic>>[];
-  for (final file in dartFiles) {
-    final filePath = file.absolute.path;
-    final content = file.readAsStringSync();
-    if (containsAnnotations(content)) {
-      params.add([filePath]);
-    }
-  }
+
+  await Future.wait([
+    for (final file in dartFiles)
+      sharedIsolates
+          .compute(_checkAndCollectAnnotatedFiles, file)
+          .then((value) {
+        if (value.isNotEmpty) {
+          params.add([value]);
+        }
+      }),
+  ]);
 
   print('Total files to generate: ${params.length}');
 
@@ -56,7 +59,9 @@ Future<void> generate(
   await Future.wait(
     [
       for (final param in params)
-        isolateManager.compute(param).then((value) {
+        sharedIsolates
+            .compute(_getAndGenerateFromAnotatedFunctions, param)
+            .then((value) {
           counter += value.length;
           anotatedFunctions.addAll(value);
         }),
@@ -78,8 +83,17 @@ Future<void> generate(
 
   print('Total generated functions: $counter');
 
-  await isolateManager.stop();
+  await sharedIsolates.stop();
   print('Done');
+}
+
+Future<String> _checkAndCollectAnnotatedFiles(File file) async {
+  final filePath = file.absolute.path;
+  final content = file.readAsStringSync();
+  if (containsAnnotations(content)) {
+    return filePath;
+  }
+  return '';
 }
 
 bool containsAnnotations(String content) {
