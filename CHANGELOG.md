@@ -1,3 +1,10 @@
+## 0.0.5
+
+* Refactor worker mapping functions for improved readability and functionality
+* Add unit tests for utility functions in utils_test.dart
+* Update file path handling to use the `path` package for improved cross-platform compatibility
+* Add GitHub Actions workflows for continuous integration and automated testing
+
 ## 0.0.4
 
 * Add support for `IsolateManagerCustomWorker` class generation
