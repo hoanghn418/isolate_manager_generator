@@ -30,7 +30,7 @@ Future<void> generate(
   };
   final isDebug = argResults['debug'] as bool? ?? false;
   final isWasm = argResults['wasm'] as bool? ?? false;
-  final name = argResults['name'] as String;
+  final name = argResults['shared-name'] as String;
   final isWorkerMappings = argResults['worker-mappings-experiment'] as String;
 
   print('Parsing the `IsolateManagerWorker` inside directory: $input...');
