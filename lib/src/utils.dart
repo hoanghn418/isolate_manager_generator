@@ -43,7 +43,7 @@ List<String> addImportStatements(
   }
 
   final newFunctionSourceImport =
-      "import '${relative(sourceFilePath, from: 'lib')}';";
+      "import '${relative(sourceFilePath, from: dirname(mainPath))}';";
   if (absolute(sourceFilePath) != mainPath &&
       !result.contains(newFunctionSourceImport)) {
     result.insert(++lastImportIndex, newFunctionSourceImport);
@@ -57,7 +57,8 @@ List<String> addWorkerMappingsCall(List<String> content) {
   var result = List<String>.from(content);
   var mainIndex = -1;
   for (var i = 0; i < result.length; i++) {
-    if (result[i].contains('void main(')) {
+    if (result[i].contains('void main(') ||
+        result[i].contains('Future<void> main(')) {
       mainIndex = i;
       break;
     }
@@ -70,7 +71,7 @@ List<String> addWorkerMappingsCall(List<String> content) {
 
   var insertionIndex = mainIndex;
   while (insertionIndex < result.length &&
-      !result[insertionIndex].contains(') {')) {
+      !result[insertionIndex].trim().endsWith('{')) {
     insertionIndex++;
   }
 
