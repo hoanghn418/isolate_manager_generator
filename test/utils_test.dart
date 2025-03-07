@@ -1,0 +1,343 @@
+import 'dart:io';
+
+import 'package:isolate_manager_generator/src/utils.dart';
+import 'package:path/path.dart' as p;
+import 'package:test/test.dart';
+
+void main() {
+  group('printDebug', () {
+    test('prints message', () {
+      expect(
+          () => printDebug(() => 'debug message'), prints('debug message\n'));
+    });
+
+    test('handles null message', () {
+      expect(() => printDebug(() => null), prints('null\n'));
+    });
+  });
+
+  group('readFileLines', () {
+    late Directory tempDir;
+    late String tempFilePath;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('test_utils_');
+      tempFilePath = p.join(tempDir.path, 'test.txt');
+    });
+
+    tearDown(() {
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('returns empty list if file does not exist', () async {
+      expect(await readFileLines('non_existent_file.txt'), isEmpty);
+    });
+
+    test('reads file content as lines', () async {
+      final file = File(tempFilePath);
+      await file.writeAsString('line1\nline2\nline3');
+
+      expect(await readFileLines(tempFilePath),
+          equals(['line1', 'line2', 'line3']));
+    });
+
+    test('handles empty file', () async {
+      final file = File(tempFilePath);
+      await file.writeAsString('');
+
+      expect(await readFileLines(tempFilePath), isEmpty);
+    });
+  });
+
+  group('writeFile', () {
+    late Directory tempDir;
+    late String tempFilePath;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('test_utils_');
+      tempFilePath = p.join(tempDir.path, 'test.txt');
+    });
+
+    tearDown(() {
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('writes content to file with newline', () async {
+      await writeFile(tempFilePath, ['line1', 'line2', 'line3']);
+
+      final content = await File(tempFilePath).readAsString();
+      expect(content, equals('line1\nline2\nline3\n'));
+    });
+
+    test('handles empty content', () async {
+      await writeFile(tempFilePath, []);
+
+      final content = await File(tempFilePath).readAsString();
+      expect(content, equals('\n'));
+    });
+
+    test('overwrites existing file', () async {
+      final file = File(tempFilePath);
+      await file.writeAsString('original content');
+
+      await writeFile(tempFilePath, ['new content']);
+
+      final content = await File(tempFilePath).readAsString();
+      expect(content, equals('new content\n'));
+    });
+  });
+
+  group('addImportStatements', () {
+    test('adds isolate_manager import when not present', () {
+      final content = ['import "dart:io";', 'void main() {}'];
+      final result =
+          addImportStatements(content, 'lib/src/file.dart', 'lib/main.dart');
+
+      expect(result,
+          contains("import 'package:isolate_manager/isolate_manager.dart';"));
+    });
+
+    test('does not add duplicate isolate_manager import', () {
+      final content = [
+        'import "dart:io";',
+        "import 'package:isolate_manager/isolate_manager.dart';",
+        'void main() {}'
+      ];
+      final result =
+          addImportStatements(content, 'lib/src/file.dart', 'lib/main.dart');
+
+      expect(
+          result
+              .where((l) =>
+                  l == "import 'package:isolate_manager/isolate_manager.dart';")
+              .length,
+          equals(1));
+    });
+
+    test('adds source file import when necessary', () {
+      final content = ['import "dart:io";', 'void main() {}'];
+      final result =
+          addImportStatements(content, 'lib/src/worker.dart', 'lib/main.dart');
+
+      expect(result, contains("import 'src/worker.dart';"));
+    });
+
+    test('does not add source file import when source is main', () {
+      final content = ['import "dart:io";', 'void main() {}'];
+      final result = addImportStatements(
+          content, p.absolute('lib/main.dart'), p.absolute('lib/main.dart'));
+
+      expect(result.any((l) => l.contains("import 'main.dart';")), isFalse);
+    });
+
+    test('handles content with no imports', () {
+      final content = ['void main() {}'];
+      final result =
+          addImportStatements(content, 'lib/src/file.dart', 'lib/main.dart');
+
+      expect(result[0],
+          equals("import 'package:isolate_manager/isolate_manager.dart';"));
+    });
+
+    test('preserves order of existing imports', () {
+      final content = [
+        'import "dart:io";',
+        'import "dart:async";',
+        'void main() {}'
+      ];
+      final result =
+          addImportStatements(content, 'lib/src/file.dart', 'lib/main.dart');
+
+      expect(result[0], equals('import "dart:io";'));
+      expect(result[1], equals('import "dart:async";'));
+      expect(result[2],
+          equals("import 'package:isolate_manager/isolate_manager.dart';"));
+    });
+  });
+
+  group('addWorkerMappingsCall', () {
+    test('adds call to _addWorkerMappings in main function', () {
+      final content = ['void main() {', '  print("hello");', '}'];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result[1], equals('  _addWorkerMappings();'));
+    });
+
+    test('does not add duplicate call', () {
+      final content = [
+        'void main() {',
+        '  _addWorkerMappings();',
+        '  print("hello");',
+        '}'
+      ];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result.where((l) => l.contains('_addWorkerMappings();')).length,
+          equals(1));
+    });
+
+    test('handles multi-line main function declaration', () {
+      final content = ['void main(', '  ) {', '  print("hello");', '}'];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result[2], equals('  _addWorkerMappings();'));
+    });
+
+    test('returns original content if no main function found', () {
+      final content = ['class MyClass {}'];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result, equals(content));
+    });
+
+    test('returns original content if main function is malformed', () {
+      final content = ['void main()'];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result, equals(content));
+    });
+
+    test('handles main function with arguments', () {
+      final content = [
+        'void main(List<String> args) {',
+        '  print("hello");',
+        '}'
+      ];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result[1], equals('  _addWorkerMappings();'));
+    });
+
+    test('handles async main function', () {
+      final content = ['Future<void> main() async {', '  print("hello");', '}'];
+      final result = addWorkerMappingsCall(content);
+
+      expect(result[1], equals('  _addWorkerMappings();'));
+    });
+  });
+
+  group('addOrUpdateWorkerMappingsFunction', () {
+    test('adds new worker mappings function if none exists', () {
+      final content = ['void main() {}'];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(result, contains('void _addWorkerMappings() {'));
+      expect(
+          result,
+          contains(
+              "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');"));
+    });
+
+    test('updates existing empty worker mappings function', () {
+      final content = ['void main() {}', 'void _addWorkerMappings() {}'];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(
+          result.join('\n'),
+          contains(
+              "void _addWorkerMappings() {\n  IsolateManager.addWorkerMapping(myFunction, 'myFunction');"));
+    });
+
+    test('adds to existing worker mappings function', () {
+      final content = [
+        'void main() {}',
+        'void _addWorkerMappings() {',
+        "  IsolateManager.addWorkerMapping(existingFunction, 'existingFunction');",
+        '}'
+      ];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(
+          result,
+          contains(
+              "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');"));
+      expect(
+          result,
+          contains(
+              "  IsolateManager.addWorkerMapping(existingFunction, 'existingFunction');"));
+    });
+
+    test('does not add duplicate mapping', () {
+      final content = [
+        'void main() {}',
+        'void _addWorkerMappings() {',
+        "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');",
+        '}'
+      ];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(result.where((l) => l.contains("'myFunction'")).length, equals(1));
+    });
+
+    test('handles function with double quotes', () {
+      final content = [
+        'void main() {}',
+        'void _addWorkerMappings() {',
+        '  IsolateManager.addWorkerMapping(existingFunction, "existingFunction");',
+        '}'
+      ];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(
+          result,
+          contains(
+              "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');"));
+    });
+
+    test('preserves comments in existing function', () {
+      final content = [
+        'void main() {}',
+        'void _addWorkerMappings() {',
+        '  // Add worker mappings here',
+        "  IsolateManager.addWorkerMapping(existingFunction, 'existingFunction');",
+        '}'
+      ];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(result, contains('  // Add worker mappings here'));
+    });
+
+    test('adds correct documentation comments to new function', () {
+      final content = ['void main() {}'];
+      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+
+      expect(
+          result,
+          contains(
+              '/// This method MUST be stored at the end of the file to avoid'));
+      expect(result, contains('/// issues when generating.'));
+    });
+  });
+
+  group('addWorkerMappingToSourceFile integration', () {
+    late Directory tempDir;
+    late String tempMainPath;
+    late String tempSourcePath;
+
+    setUp(() async {
+      tempDir = Directory.systemTemp.createTempSync('test_utils_');
+      tempMainPath = p.join(tempDir.path, 'main.dart');
+      tempSourcePath = p.join(tempDir.path, 'source.dart');
+
+      await File(tempMainPath).writeAsString('void main() {\n}\n');
+      await File(tempSourcePath).writeAsString('void worker() {}\n');
+    });
+
+    tearDown(() {
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('integrates all required changes', () async {
+      await addWorkerMappingToSourceFile(
+          tempMainPath, tempSourcePath, 'worker');
+
+      final content = await File(tempMainPath).readAsLines();
+      expect(content,
+          contains("import 'package:isolate_manager/isolate_manager.dart';"));
+      expect(content, contains("import 'source.dart';"));
+      expect(content, contains('  _addWorkerMappings();'));
+      expect(content,
+          contains("  IsolateManager.addWorkerMapping(worker, 'worker');"));
+    });
+  });
+}
