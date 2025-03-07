@@ -88,7 +88,7 @@ Future<void> generate(
 }
 
 Future<String> _checkAndCollectAnnotatedFiles(File file) async {
-  final filePath = file.absolute.path;
+  final filePath = p.absolute(file.path);
   final content = file.readAsStringSync();
   if (containsAnnotations(content)) {
     return filePath;
@@ -158,7 +158,8 @@ Future<void> _generateFromAnotatedFunctions(
   List<String> dartArgs,
   String workerMappingsPath,
 ) async {
-  final file = File('.IsolateManagerShared.${anotatedFunctions.hashCode}.dart');
+  final file = File(p.join(
+      p.current, '.IsolateManagerShared.${anotatedFunctions.hashCode}.dart'));
   final extension = isWasm ? 'wasm' : 'js';
   final outputPath = p.join(output, '$name.$extension');
   final outputFile = File(outputPath);
@@ -190,9 +191,9 @@ Future<void> _generateFromAnotatedFunctions(
       [
         'compile',
         extension,
-        file.path,
+        p.normalize(file.path),
         '-o',
-        outputPath,
+        p.normalize(outputPath),
         obfuscate,
         if (!isWasm) '--omit-implicit-checks',
         if (!isDebug && !isWasm) '--no-source-maps',
@@ -212,9 +213,9 @@ Future<void> _generateFromAnotatedFunctions(
       print('Compiled: ${p.relative(outputPath)}');
       if (!isDebug) {
         if (isWasm) {
-          await File('$output/$name.unopt.wasm').delete();
+          await File(p.join(output, '$name.unopt.wasm')).delete();
         } else {
-          await File('$output/$name.js.deps').delete();
+          await File(p.join(output, '$name.js.deps')).delete();
         }
       }
     } else {

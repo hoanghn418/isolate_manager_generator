@@ -85,7 +85,7 @@ Future<void> generate(
 }
 
 Future<String> checkAndCollectAnnotatedFiles(File file) async {
-  final filePath = file.absolute.path;
+  final filePath = p.absolute(file.path);
   final content = await file.readAsString();
   if (containsAnnotations(content)) {
     return filePath;
@@ -191,11 +191,12 @@ Future<void> _generateFromAnotatedFunction(List<dynamic> params) async {
   final dartArgs = params[0][5] as List<String>;
   final MapEntry<String, AnnotationResult> function = params[1];
 
-  String inputPath = p.join(
-    p.dirname(sourceFilePath),
-    '.IsolateManagerWorker.${function.key}.${function.hashCode}.dart',
+  final inputPath = p.absolute(
+    p.join(
+      p.dirname(sourceFilePath),
+      '.IsolateManagerWorker.${function.key}.${function.hashCode}.dart',
+    ),
   );
-  inputPath = p.absolute(inputPath);
   final file = File(inputPath);
   final extension = isWasm ? 'wasm' : 'js';
   final name = function.value.workerName != ''
@@ -256,9 +257,9 @@ Future<void> _generateFromAnotatedFunction(List<dynamic> params) async {
       );
       if (!isDebug) {
         if (isWasm) {
-          await File('$output/$name.unopt.wasm').delete();
+          await File(p.join(output, '$name.unopt.wasm')).delete();
         } else {
-          await File('$output/$name.js.deps').delete();
+          await File(p.join(output, '$name.js.deps')).delete();
         }
       }
     } else {

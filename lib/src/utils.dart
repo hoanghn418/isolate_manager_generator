@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
 
 void printDebug(Object? Function() log) {
   print(log());
@@ -42,19 +42,26 @@ List<String> addImportStatements(
     result.insert(++lastImportIndex, newImportLine);
   }
 
-  final newFunctionSourceImport = relative(sourceFilePath, from: 'lib');
+  final newFunctionSourceImport = p.relative(sourceFilePath, from: 'lib');
   final newFunctionSourceImportRelativeFromMain =
-      relative(sourceFilePath, from: dirname(mainPath));
-  final containsSourceImport =
-      result.any((line) => line.contains(newFunctionSourceImport));
-  final containsSourceImportRelativeFromMain = result
-      .any((line) => line.contains(newFunctionSourceImportRelativeFromMain));
+      p.relative(sourceFilePath, from: p.dirname(mainPath));
 
-  if (absolute(sourceFilePath) != mainPath &&
+  // Convert paths to use forward slashes for import statements
+  final platformIndependentSourceImport =
+      newFunctionSourceImport.replaceAll(p.separator, '/');
+  final platformIndependentSourceImportRelative =
+      newFunctionSourceImportRelativeFromMain.replaceAll(p.separator, '/');
+
+  final containsSourceImport =
+      result.any((line) => line.contains(platformIndependentSourceImport));
+  final containsSourceImportRelativeFromMain = result
+      .any((line) => line.contains(platformIndependentSourceImportRelative));
+
+  if (p.absolute(sourceFilePath) != mainPath &&
       !containsSourceImport &&
       !containsSourceImportRelativeFromMain) {
     result.insert(++lastImportIndex,
-        "import '$newFunctionSourceImportRelativeFromMain';");
+        "import '$platformIndependentSourceImportRelative';");
   }
 
   return result;
@@ -148,8 +155,8 @@ Future<void> addWorkerMappingToSourceFile(
   String functionName,
 ) async {
   final mainPath = workerMappingsPath.isNotEmpty
-      ? absolute(workerMappingsPath)
-      : absolute('lib/main.dart');
+      ? p.absolute(workerMappingsPath)
+      : p.absolute(p.join('lib', 'main.dart'));
 
   final content = await readFileLines(mainPath);
   if (content.isEmpty) return;
