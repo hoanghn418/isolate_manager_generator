@@ -29,16 +29,14 @@ class IsolateManagerGenerator {
       ..addOption(
         'input',
         abbr: 'i',
-        help:
-            'Path of the folder to generate the Workers. Default is set to `lib`.',
+        help: 'Path of the folder to generate the Workers',
         valueHelp: 'lib',
         defaultsTo: 'lib',
       )
       ..addOption(
         'output',
         abbr: 'o',
-        help:
-            'Path of the folder to save the generated files. Default is set to `web`.',
+        help: 'Path of the folder to save the generated files',
         valueHelp: 'web',
         defaultsTo: 'web',
       )
@@ -47,14 +45,13 @@ class IsolateManagerGenerator {
         abbr: 'n',
         valueHelp: kSharedWorkerName,
         defaultsTo: kSharedWorkerName,
-        help:
-            'Name of the generated JS. Default is set to `$kSharedWorkerName`.',
+        help: 'Name of the generated shared Worker',
       )
       ..addOption(
         'obfuscate',
         valueHelp: '4',
         defaultsTo: '4',
-        help: 'JS obfuscation level (0 to 4). Default is set to 4',
+        help: 'JS obfuscation level (0 to 4)',
       )
       ..addFlag(
         'debug',
