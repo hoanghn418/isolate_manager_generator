@@ -153,6 +153,41 @@ void main() {
       expect(result[2],
           equals("import 'package:isolate_manager/isolate_manager.dart';"));
     });
+
+    test('relative import from `lib`', () {
+      final content = ['import "dart:io";', 'void main() {}'];
+      final sourceFilePath = 'lib/src/worker.dart';
+      final mainPath = 'lib/main.dart';
+
+      final result = addImportStatements(content, sourceFilePath, mainPath);
+
+      expect(result.contains("import 'src/worker.dart';"), isTrue);
+      expect(result.contains("import '../src/worker.dart';"), isFalse);
+    });
+
+    test('relative import from non-lib directory', () {
+      final content = ['import "dart:io";', 'void main() {}'];
+      final sourceFilePath = 'lib/src/worker.dart';
+      final mainPath = 'lib/pages/main.dart';
+
+      final result = addImportStatements(content, sourceFilePath, mainPath);
+
+      expect(result.contains("import '../src/worker.dart';"), isTrue);
+    });
+
+    test('does not add source file import when already present', () {
+      final content = [
+        'import "dart:io";',
+        "import 'src/worker.dart';",
+        'void main() {}'
+      ];
+      final result =
+          addImportStatements(content, 'lib/src/worker.dart', 'lib/main.dart');
+
+      expect(
+          result.where((l) => l.contains("import 'src/worker.dart';")).length,
+          equals(1));
+    });
   });
 
   group('addWorkerMappingsCall', () {
