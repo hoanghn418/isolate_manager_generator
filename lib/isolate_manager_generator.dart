@@ -72,9 +72,15 @@ class IsolateManagerGenerator {
         defaultsTo: '',
         help:
             '[Experiment] Generate the `workerMappings` and add it to the `main` app automatically',
-      );
+      )
+      ..addFlag('help', abbr: 'h', help: 'Display this help message.');
 
     final argResults = parser.parse(args);
+
+    if (argResults['help'] as bool) {
+      print(parser.usage);
+      return;
+    }
 
     bool isSingle = argResults['single'] as bool;
     bool isShared = argResults['shared'] as bool;
