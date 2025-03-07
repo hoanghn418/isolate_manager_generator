@@ -73,7 +73,8 @@ Future<void> generate(
   int counter = 0;
   await Future.wait([
     for (final param in params)
-      _getAndGenerateFromAnotatedFunctions(param)
+      sharedIsolates
+          .compute(_getAndGenerateFromAnotatedFunctions, param)
           .then((value) => counter += value),
   ]);
 
@@ -160,7 +161,7 @@ Future<void> _generateFromAnotatedFunctions(
   await Future.wait(
     [
       for (final function in anotatedFunctions.entries)
-        sharedIsolates.compute(_generateFromAnotatedFunction, [
+        _generateFromAnotatedFunction([
           params,
           function,
         ]),
