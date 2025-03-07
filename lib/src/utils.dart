@@ -42,11 +42,19 @@ List<String> addImportStatements(
     result.insert(++lastImportIndex, newImportLine);
   }
 
-  final newFunctionSourceImport =
-      "import '${relative(sourceFilePath, from: dirname(mainPath))}';";
+  final newFunctionSourceImport = relative(sourceFilePath, from: 'lib');
+  final newFunctionSourceImportRelativeFromMain =
+      relative(sourceFilePath, from: dirname(mainPath));
+  final containsSourceImport =
+      result.any((line) => line.contains(newFunctionSourceImport));
+  final containsSourceImportRelativeFromMain = result
+      .any((line) => line.contains(newFunctionSourceImportRelativeFromMain));
+
   if (absolute(sourceFilePath) != mainPath &&
-      !result.contains(newFunctionSourceImport)) {
-    result.insert(++lastImportIndex, newFunctionSourceImport);
+      !containsSourceImport &&
+      !containsSourceImportRelativeFromMain) {
+    result.insert(++lastImportIndex,
+        "import '$newFunctionSourceImportRelativeFromMain';");
   }
 
   return result;
