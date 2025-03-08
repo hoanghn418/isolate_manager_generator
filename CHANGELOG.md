@@ -1,3 +1,7 @@
+## 0.0.6
+
+* Add `sub-dir` option to add sub directory for the workers.
+
 ## 0.0.5
 
 * Refactor worker mapping functions for improved readability and functionality
