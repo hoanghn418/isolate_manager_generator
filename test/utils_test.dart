@@ -308,6 +308,20 @@ void main() {
       expect(result.where((l) => l.contains("'myFunction'")).length, equals(1));
     });
 
+    test('does not add duplicate mapping with available subDir', () {
+      final content = [
+        'void main() {}',
+        'void _addWorkerMappings() {',
+        "  IsolateManager.addWorkerMapping(myFunction, 'workers/myFunction');",
+        '}'
+      ];
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', 'workers');
+
+      expect(result.where((l) => l.contains("'workers/myFunction'")).length,
+          equals(1));
+    });
+
     test('handles function with double quotes', () {
       final content = [
         'void main() {}',
