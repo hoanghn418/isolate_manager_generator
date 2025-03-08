@@ -42,6 +42,7 @@ Future<void> generate(
   final isDebug = argResults['debug'] as bool? ?? false;
   final isWasm = argResults['wasm'] as bool? ?? false;
   final isWorkerMappings = argResults['worker-mappings-experiment'] as String;
+  final subDir = argResults['sub-dir'] as String;
 
   print('Parsing the `IsolateManagerWorker` inside directory: $input...');
 
@@ -61,7 +62,8 @@ Future<void> generate(
               isWasm,
               output,
               dartArgs,
-              isWorkerMappings
+              isWorkerMappings,
+              subDir,
             ]);
           }
         }),
@@ -157,6 +159,7 @@ Future<void> _generateFromAnotatedFunctions(
 ) async {
   final sourceFilePath = params[0] as String;
   final isWorkerMappings = params[6] as String;
+  final subDir = params[7] as String;
 
   await Future.wait(
     [
@@ -175,6 +178,7 @@ Future<void> _generateFromAnotatedFunctions(
         isWorkerMappings,
         sourceFilePath,
         function.key,
+        subDir,
       );
 
       printDebug(() => 'Done.');

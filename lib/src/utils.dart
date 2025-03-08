@@ -107,10 +107,11 @@ List<String> addWorkerMappingsCall(List<String> content) {
 List<String> addOrUpdateWorkerMappingsFunction(
   List<String> content,
   String functionName,
+  String subDir,
 ) {
   var result = List<String>.from(content);
-  final newWorkerMappingLine =
-      "  IsolateManager.addWorkerMapping($functionName, '$functionName');";
+  String newWorkerMappingLine =
+      "  IsolateManager.addWorkerMapping($functionName, '${p.join(subDir, functionName)}');";
 
   final addWorkerMappingsIndex = result.indexWhere((line) =>
       line.replaceAll(' ', '').startsWith('void_addWorkerMappings()'));
@@ -153,6 +154,7 @@ Future<void> addWorkerMappingToSourceFile(
   String workerMappingsPath,
   String sourceFilePath,
   String functionName,
+  String subDir,
 ) async {
   final mainPath = workerMappingsPath.isNotEmpty
       ? p.absolute(workerMappingsPath)
@@ -164,7 +166,7 @@ Future<void> addWorkerMappingToSourceFile(
   var updatedContent = addImportStatements(content, sourceFilePath, mainPath);
   updatedContent = addWorkerMappingsCall(updatedContent);
   updatedContent =
-      addOrUpdateWorkerMappingsFunction(updatedContent, functionName);
+      addOrUpdateWorkerMappingsFunction(updatedContent, functionName, subDir);
 
   await writeFile(mainPath, updatedContent);
 

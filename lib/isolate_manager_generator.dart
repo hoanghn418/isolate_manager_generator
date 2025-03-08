@@ -68,7 +68,12 @@ class IsolateManagerGenerator {
         help:
             '[Experiment] Generate the `workerMappings` and add it to the `main` app automatically',
       )
-      ..addFlag('help', abbr: 'h', help: 'Display this help message.');
+      ..addFlag('help', abbr: 'h', help: 'Display this help message.')
+      ..addOption(
+        'sub-dir',
+        help: 'Sub-directory to generate the Workers',
+        defaultsTo: '',
+      );
 
     final argResults = parser.parse(args);
 
