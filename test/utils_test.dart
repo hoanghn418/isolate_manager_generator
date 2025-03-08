@@ -254,18 +254,20 @@ void main() {
   group('addOrUpdateWorkerMappingsFunction', () {
     test('adds new worker mappings function if none exists', () {
       final content = ['void main() {}'];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', 'subDir');
 
       expect(result, contains('void _addWorkerMappings() {'));
       expect(
           result,
           contains(
-              "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');"));
+              "  IsolateManager.addWorkerMapping(myFunction, '${p.join('subDir', 'myFunction')}');"));
     });
 
     test('updates existing empty worker mappings function', () {
       final content = ['void main() {}', 'void _addWorkerMappings() {}'];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(
           result.join('\n'),
@@ -280,7 +282,8 @@ void main() {
         "  IsolateManager.addWorkerMapping(existingFunction, 'existingFunction');",
         '}'
       ];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(
           result,
@@ -299,7 +302,8 @@ void main() {
         "  IsolateManager.addWorkerMapping(myFunction, 'myFunction');",
         '}'
       ];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(result.where((l) => l.contains("'myFunction'")).length, equals(1));
     });
@@ -311,7 +315,8 @@ void main() {
         '  IsolateManager.addWorkerMapping(existingFunction, "existingFunction");',
         '}'
       ];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(
           result,
@@ -327,14 +332,16 @@ void main() {
         "  IsolateManager.addWorkerMapping(existingFunction, 'existingFunction');",
         '}'
       ];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(result, contains('  // Add worker mappings here'));
     });
 
     test('adds correct documentation comments to new function', () {
       final content = ['void main() {}'];
-      final result = addOrUpdateWorkerMappingsFunction(content, 'myFunction');
+      final result =
+          addOrUpdateWorkerMappingsFunction(content, 'myFunction', '');
 
       expect(
           result,
@@ -364,15 +371,17 @@ void main() {
 
     test('integrates all required changes', () async {
       await addWorkerMappingToSourceFile(
-          tempMainPath, tempSourcePath, 'worker');
+          tempMainPath, tempSourcePath, 'worker', 'subDir');
 
       final content = await File(tempMainPath).readAsLines();
       expect(content,
           contains("import 'package:isolate_manager/isolate_manager.dart';"));
       expect(content, contains("import 'source.dart';"));
       expect(content, contains('  _addWorkerMappings();'));
-      expect(content,
-          contains("  IsolateManager.addWorkerMapping(worker, 'worker');"));
+      expect(
+          content,
+          contains(
+              "  IsolateManager.addWorkerMapping(worker, '${p.join('subDir', 'worker')}');"));
     });
   });
 }
