@@ -128,8 +128,11 @@ List<String> addOrUpdateWorkerMappingsFunction(
       ..add('');
   } else {
     // Update existing function
-    if (!result.any((line) =>
-        line.contains(RegExp('(\'$functionName\'|"$functionName")')))) {
+    final functionPath = p.join(subDir, functionName);
+    final containsFunctionPath = result.any(
+        (line) => line.contains(RegExp('(\'$functionPath\'|"$functionPath")')));
+
+    if (!containsFunctionPath) {
       final line = result[addWorkerMappingsIndex].replaceAll(' ', '');
       if (line.startsWith('void_addWorkerMappings(){}')) {
         result[addWorkerMappingsIndex] = 'void _addWorkerMappings() {';
