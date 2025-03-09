@@ -1,3 +1,7 @@
+## 0.0.10
+
+* Use the same separator for the generated function name across platforms. The `IsolateManager` will handle the sepecifics.
+
 ## 0.0.9
 
 * Fix import path separator issue when generate the shared worker.
