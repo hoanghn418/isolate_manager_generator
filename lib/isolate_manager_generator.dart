@@ -100,7 +100,7 @@ class IsolateManagerGenerator {
       return;
     }
 
-    final List<File> dartFiles = _listDartFiles(Directory(input), []);
+    final List<File> dartFiles = listDartFiles(Directory(input), []);
 
     if (isSingle) {
       print('>> Generating the single Workers...');
@@ -115,17 +115,17 @@ class IsolateManagerGenerator {
     }
   }
 
-  static List<File> _listDartFiles(
+  static List<File> listDartFiles(
     Directory dir,
     List<File> fileList,
   ) {
     final files = dir.listSync(recursive: false);
 
     for (FileSystemEntity file in files) {
-      if (file is File && extension(file.path) == 'dart') {
+      if (file is File && extension(file.path) == '.dart') {
         fileList.add(file);
       } else if (file is Directory) {
-        fileList = _listDartFiles(file, fileList);
+        fileList = listDartFiles(file, fileList);
       }
     }
 
