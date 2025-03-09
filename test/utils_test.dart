@@ -385,7 +385,7 @@ void main() {
 
     test('integrates all required changes', () async {
       await addWorkerMappingToSourceFile(
-          tempMainPath, tempSourcePath, 'worker', 'subDir');
+          tempMainPath, tempSourcePath, 'worker', 'sub_path');
 
       final content = await File(tempMainPath).readAsLines();
       expect(content,
@@ -395,7 +395,7 @@ void main() {
       expect(
           content,
           contains(
-              "  IsolateManager.addWorkerMapping(worker, '${p.join('subDir', 'worker')}');"));
+              "  IsolateManager.addWorkerMapping(worker, '${p.join('sub_path', 'worker')}');"));
     });
   });
 }
