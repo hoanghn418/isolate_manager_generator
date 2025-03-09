@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:isolate_manager/isolate_manager.dart';
+import 'package:path/path.dart';
 
 import 'src/generate_shared.dart' as shared;
 import 'src/generate_single.dart' as single;
@@ -70,9 +71,11 @@ class IsolateManagerGenerator {
       )
       ..addFlag('help', abbr: 'h', help: 'Display this help message.')
       ..addOption(
-        'sub-dir',
-        help: 'Sub-directory to generate the Workers',
+        'sub-path',
+        help:
+            'Sub-path of the function name when generate the worker-mappings (apply only for the single functions). It\'s different from the `output` path.',
         defaultsTo: '',
+        aliases: ['sub-dir'],
       );
 
     final argResults = parser.parse(args);
@@ -119,7 +122,7 @@ class IsolateManagerGenerator {
     final files = dir.listSync(recursive: false);
 
     for (FileSystemEntity file in files) {
-      if (file is File && file.path.endsWith('.dart')) {
+      if (file is File && extension(file.path) == 'dart') {
         fileList.add(file);
       } else if (file is Directory) {
         fileList = _listDartFiles(file, fileList);
