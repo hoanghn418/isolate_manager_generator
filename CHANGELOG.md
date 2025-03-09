@@ -1,3 +1,7 @@
+## 0.0.8
+
+* Fix dart file extension check issue.
+
 ## 0.0.7
 
 * Use `sub-path` to replace `sub-dir` for consistency.
