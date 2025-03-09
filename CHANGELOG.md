@@ -1,3 +1,7 @@
+## 0.0.9
+
+* Fix import path separator issue when generate the shared worker.
+
 ## 0.0.8
 
 * Fix dart file extension check issue.
