@@ -107,12 +107,12 @@ List<String> addWorkerMappingsCall(List<String> content) {
 List<String> addOrUpdateWorkerMappingsFunction(
   List<String> content,
   String functionName,
-  String subDir,
+  String subPath,
 ) {
   var result = List<String>.from(content);
   // We don't need to set the right separator here, the `IsolateManager.addWorkerMapping`
   // method will handle it.
-  final functionPath = subDir == '' ? functionName : '$subDir/$functionName';
+  final functionPath = subPath == '' ? functionName : '$subPath/$functionName';
   final newWorkerMappingLine =
       "  IsolateManager.addWorkerMapping($functionName, '$functionPath');";
 
