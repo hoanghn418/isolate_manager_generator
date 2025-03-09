@@ -173,7 +173,8 @@ Future<void> _generateFromAnotatedFunctions(
     final sink = file.openWrite();
     sink.writeln("import 'package:isolate_manager/isolate_manager.dart';");
     for (final function in anotatedFunctions.entries) {
-      sink.writeln("import '${p.relative(function.value)}';");
+      final path = p.relative(function.value);
+      sink.writeln("import '${path.replaceAll(p.separator, '/')}';");
     }
     sink.writeln('final Map<String, Function> map = {');
     for (final function in anotatedFunctions.entries) {
