@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Use `sub-path` to replace `sub-dir` for consistency.
+
 ## 0.0.6
 
 * Add `sub-dir` option to add sub directory for the workers.
