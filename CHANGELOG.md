@@ -1,3 +1,7 @@
+## 0.0.11
+
+* Fix function path generation to handle empty subPath case.
+
 ## 0.0.10
 
 * Use the same separator for the generated function name across platforms. The `IsolateManager` will handle the sepecifics.
