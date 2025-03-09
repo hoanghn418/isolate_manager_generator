@@ -110,8 +110,11 @@ List<String> addOrUpdateWorkerMappingsFunction(
   String subDir,
 ) {
   var result = List<String>.from(content);
-  String newWorkerMappingLine =
-      "  IsolateManager.addWorkerMapping($functionName, '${p.join(subDir, functionName)}');";
+  // We don't need to set the right separator here, the `IsolateManager.addWorkerMapping`
+  // method will handle it.
+  final functionPath = '$subDir/$functionName';
+  final newWorkerMappingLine =
+      "  IsolateManager.addWorkerMapping($functionName, '$functionPath');";
 
   final addWorkerMappingsIndex = result.indexWhere((line) =>
       line.replaceAll(' ', '').startsWith('void_addWorkerMappings()'));
@@ -128,7 +131,6 @@ List<String> addOrUpdateWorkerMappingsFunction(
       ..add('');
   } else {
     // Update existing function
-    final functionPath = p.join(subDir, functionName);
     final containsFunctionPath = result.any(
         (line) => line.contains(RegExp('(\'$functionPath\'|"$functionPath")')));
 
