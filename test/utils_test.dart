@@ -261,7 +261,7 @@ void main() {
       expect(
           result,
           contains(
-              "  IsolateManager.addWorkerMapping(myFunction, '${p.join('subDir', 'myFunction')}');"));
+              "  IsolateManager.addWorkerMapping(myFunction, 'subDir/myFunction');"));
     });
 
     test('updates existing empty worker mappings function', () {
@@ -395,7 +395,7 @@ void main() {
       expect(
           content,
           contains(
-              "  IsolateManager.addWorkerMapping(worker, '${p.join('sub_path', 'worker')}');"));
+              "  IsolateManager.addWorkerMapping(worker, 'sub_path/worker');"));
     });
   });
 }
