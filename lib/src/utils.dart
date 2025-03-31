@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:isolate_manager_generator/src/model/exceptions.dart';
 import 'package:path/path.dart' as p;
 
 void printDebug(Object? Function() log) {
@@ -10,8 +11,7 @@ void printDebug(Object? Function() log) {
 Future<List<String>> readFileLines(String path) async {
   final file = File(path);
   if (!file.existsSync()) {
-    printDebug(() => 'File does not exist: $path');
-    return [];
+    throw IMGFileNotFoundException(path);
   }
   return await file.readAsLines();
 }
@@ -80,8 +80,7 @@ List<String> addWorkerMappingsCall(List<String> content) {
   }
 
   if (mainIndex == -1) {
-    printDebug(() => 'No main function found in the source file.');
-    return result;
+    throw IMGNoMainFunctionFoundException();
   }
 
   var insertionIndex = mainIndex;
@@ -91,8 +90,7 @@ List<String> addWorkerMappingsCall(List<String> content) {
   }
 
   if (insertionIndex == result.length) {
-    printDebug(() => 'Malformed main function, no opening brace found.');
-    return result;
+    throw IMGMainFunctionHasNoOpenBracesException();
   }
 
   const addWorkerMappingsCall = '  _addWorkerMappings();';

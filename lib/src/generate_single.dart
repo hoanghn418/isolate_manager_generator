@@ -6,6 +6,7 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:args/args.dart';
 import 'package:isolate_manager/isolate_manager.dart';
+import 'package:isolate_manager_generator/src/model/exceptions.dart';
 import 'package:isolate_manager_generator/src/utils.dart';
 import 'package:path/path.dart' as p;
 
@@ -116,8 +117,7 @@ Future<Map<String, AnnotationResult>> _getAnotatedFunctions(String path) async {
   final result = await resolveFile2(path: sourceFilePath);
 
   if (result is! ResolvedUnitResult) {
-    print('Error resolving file.');
-    return {};
+    throw IMGUnableToResolvingFileException(sourceFilePath);
   }
 
   final unit = result.unit;
@@ -275,13 +275,14 @@ Future<void> _generateFromAnotatedFunction(List<dynamic> params) async {
       for (var element in r) {
         print('   > $element');
       }
-      throw Exception('Compile ERROR');
+      throw IMGCompileErrorException();
     }
   } catch (e) {
     // Restore the backup data if the compilation fails
     if (backupOutputData.isNotEmpty && !await outputFile.exists()) {
       await outputFile.writeAsString(backupOutputData);
     }
+    rethrow;
   } finally {
     if (!isDebug && await file.exists()) {
       await file.delete();
