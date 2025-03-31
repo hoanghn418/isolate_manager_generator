@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:isolate_manager_generator/src/model/exceptions.dart';
 import 'package:isolate_manager_generator/src/utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
@@ -29,8 +30,17 @@ void main() {
       tempDir.deleteSync(recursive: true);
     });
 
-    test('returns empty list if file does not exist', () async {
-      expect(await readFileLines('non_existent_file.txt'), isEmpty);
+    test('throws exception if file does not exist', () async {
+      expect(
+        () async => await readFileLines('non_existent_file.txt'),
+        throwsA(
+          isA<IMGFileNotFoundException>().having(
+            (e) => e.filePath,
+            'path',
+            'non_existent_file.txt',
+          ),
+        ),
+      );
     });
 
     test('reads file content as lines', () async {
@@ -218,18 +228,26 @@ void main() {
       expect(result[2], equals('  _addWorkerMappings();'));
     });
 
-    test('returns original content if no main function found', () {
+    test('throws error if no main function found', () async {
       final content = ['class MyClass {}'];
-      final result = addWorkerMappingsCall(content);
 
-      expect(result, equals(content));
+      expect(
+        () => addWorkerMappingsCall(content),
+        throwsA(
+          isA<IMGNoMainFunctionFoundException>(),
+        ),
+      );
     });
 
-    test('returns original content if main function is malformed', () {
+    test('throw error if no open braces in main function', () {
       final content = ['void main()'];
-      final result = addWorkerMappingsCall(content);
 
-      expect(result, equals(content));
+      expect(
+        () => addWorkerMappingsCall(content),
+        throwsA(
+          isA<IMGMainFunctionHasNoOpenBracesException>(),
+        ),
+      );
     });
 
     test('handles main function with arguments', () {
