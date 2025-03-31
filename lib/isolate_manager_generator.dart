@@ -2,13 +2,47 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:isolate_manager/isolate_manager.dart';
+import 'package:isolate_manager_generator/src/model/exceptions.dart';
 import 'package:path/path.dart';
 
 import 'src/generate_shared.dart' as shared;
 import 'src/generate_single.dart' as single;
 
 class IsolateManagerGenerator {
-  static Future<void> execute(List<String> args) async {
+  /// Executes the isolate manager generator with the provided arguments.
+  ///
+  /// Takes a list of command-line arguments, processes them, and generates
+  /// the appropriate worker files based on the configuration.
+  ///
+  /// Returns:
+  ///   0: Success
+  ///   1: Compilation error
+  ///   2: Unable to resolve file
+  ///   3: No main function found
+  ///   4: Main function has no open braces
+  ///   5: File not found
+  static Future<int> execute(List<String> args) async {
+    try {
+      await _execute(args);
+    } on IMGException catch (e) {
+      print(e.message);
+      switch (e) {
+        case IMGCompileErrorException():
+          return 1;
+        case IMGUnableToResolvingFileException():
+          return 2;
+        case IMGNoMainFunctionFoundException():
+          return 3;
+        case IMGMainFunctionHasNoOpenBracesException():
+          return 4;
+        case IMGFileNotFoundException():
+          return 5;
+      }
+    }
+    return 0;
+  }
+
+  static Future<void> _execute(List<String> args) async {
     final separator = args.indexOf(' -- ');
     List<String> dartArgs = [];
     if (separator != -1) {
