@@ -1,3 +1,9 @@
+## 0.0.12
+
+* Able to execute `dart run isolate_manager_generator`.
+* Return non-zero exit code when errors occur during the `execute` command execution for better error handling in CI/CD pipelines.
+* Update tests.
+
 ## 0.0.11
 
 * Fix function path generation to handle empty subPath case.
