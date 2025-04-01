@@ -294,6 +294,8 @@ AnnotationResult? _getIsolateManagerWorkerAnnotationValue(Element element) {
   for (final metadata in element.metadata) {
     final annotationElement = metadata.element;
     if (annotationElement is ConstructorElement) {
+      // TODO: Change to `variable2` when bumping the `analyzer` to `^6.0.0`
+      // ignore: deprecated_member_use
       final enclosingElement = annotationElement.enclosingElement;
       if (enclosingElement is ClassElement) {
         if (enclosingElement.name == classAnnotation) {
