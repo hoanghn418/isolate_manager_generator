@@ -1,3 +1,7 @@
+## 0.0.13
+
+* Fixed issue with incorrect parsing of Dart defines.
+
 ## 0.0.12
 
 * Able to execute `dart run isolate_manager_generator`.
