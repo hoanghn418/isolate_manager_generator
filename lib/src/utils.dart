@@ -178,3 +178,14 @@ Future<void> addWorkerMappingToSourceFile(
         'Updated source file: $sourceFilePath with new import, worker mapping call, and addWorkerMappings function.',
   );
 }
+
+({List<String> mainArgs, List<String> dartArgs}) parseArgs(List<String> args) {
+  final separator = args.indexOf('--');
+  List<String> dartArgs = [];
+  if (separator != -1) {
+    dartArgs = args.sublist(separator + 1);
+    args = args.sublist(0, separator);
+  }
+
+  return (mainArgs: args, dartArgs: dartArgs);
+}

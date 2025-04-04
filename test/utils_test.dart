@@ -416,4 +416,43 @@ void main() {
               "  IsolateManager.addWorkerMapping(worker, 'sub_path/worker');"));
     });
   });
+
+  group('parseArgs', () {
+    test('returns empty lists for empty input', () {
+      final parsed = parseArgs([]);
+
+      expect(parsed.mainArgs, isEmpty);
+      expect(parsed.dartArgs, isEmpty);
+    });
+
+    test('splits args at "--" separator', () {
+      final result = parseArgs(['arg1', 'arg2', '--', 'dart1', 'dart2']);
+      expect(result.mainArgs, equals(['arg1', 'arg2']));
+      expect(result.dartArgs, equals(['dart1', 'dart2']));
+    });
+
+    test('handles no separator', () {
+      final result = parseArgs(['arg1', 'arg2']);
+      expect(result.mainArgs, equals(['arg1', 'arg2']));
+      expect(result.dartArgs, isEmpty);
+    });
+
+    test('handles separator at start', () {
+      final result = parseArgs(['--', 'dart1', 'dart2']);
+      expect(result.mainArgs, isEmpty);
+      expect(result.dartArgs, equals(['dart1', 'dart2']));
+    });
+
+    test('handles separator at end', () {
+      final result = parseArgs(['arg1', 'arg2', '--']);
+      expect(result.mainArgs, equals(['arg1', 'arg2']));
+      expect(result.dartArgs, isEmpty);
+    });
+
+    test('handles multiple separators (uses first one)', () {
+      final result = parseArgs(['arg1', '--', 'dart1', '--', 'dart2']);
+      expect(result.mainArgs, equals(['arg1']));
+      expect(result.dartArgs, equals(['dart1', '--', 'dart2']));
+    });
+  });
 }

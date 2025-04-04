@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:isolate_manager/isolate_manager.dart';
 import 'package:isolate_manager_generator/src/model/exceptions.dart';
+import 'package:isolate_manager_generator/src/utils.dart';
 import 'package:path/path.dart';
 
 import 'src/generate_shared.dart' as shared;
@@ -43,12 +44,7 @@ class IsolateManagerGenerator {
   }
 
   static Future<void> _execute(List<String> args) async {
-    final separator = args.indexOf(' -- ');
-    List<String> dartArgs = [];
-    if (separator != -1) {
-      dartArgs = args.sublist(separator + 1);
-      args = args.sublist(0, separator);
-    }
+    final parsedArgs = parseArgs(args);
 
     final parser = ArgParser()
       ..addFlag(
@@ -112,7 +108,7 @@ class IsolateManagerGenerator {
         aliases: ['sub-dir'],
       );
 
-    final argResults = parser.parse(args);
+    final argResults = parser.parse(parsedArgs.mainArgs);
 
     if (argResults['help'] as bool) {
       print(parser.usage);
@@ -138,13 +134,13 @@ class IsolateManagerGenerator {
 
     if (isSingle) {
       print('>> Generating the single Workers...');
-      await single.generate(argResults, dartArgs, dartFiles);
+      await single.generate(argResults, parsedArgs.dartArgs, dartFiles);
       print('>> Generated.');
     }
 
     if (isShared) {
       print('>> Generating the shared Worker...');
-      await shared.generate(argResults, dartArgs, dartFiles);
+      await shared.generate(argResults, parsedArgs.dartArgs, dartFiles);
       print('>> Generated.');
     }
   }
